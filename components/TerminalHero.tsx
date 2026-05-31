@@ -57,7 +57,16 @@ export default function TerminalHero() {
       });
     const timers = new Set<ReturnType<typeof setTimeout>>();
 
+    let parked: HTMLDivElement | null = null;
+    const clearParked = () => {
+      if (parked) {
+        parked.remove();
+        parked = null;
+      }
+    };
+
     function parkCaret() {
+      clearParked();
       const line = document.createElement("div");
       line.className = "ln caret-line";
       const pr = document.createElement("span");
@@ -66,6 +75,7 @@ export default function TerminalHero() {
       line.appendChild(pr);
       line.appendChild(caret);
       body!.appendChild(line);
+      parked = line;
     }
 
     function typeInto(el: HTMLElement, text: string) {
@@ -86,11 +96,13 @@ export default function TerminalHero() {
     async function run() {
       while (!cancelled) {
         body!.innerHTML = "";
+        parked = null;
         body!.style.opacity = "1";
         for (let i = 0; i < SESSION.length; i++) {
           if (cancelled) return;
           const s = SESSION[i];
           if ("c" in s) {
+            clearParked();
             const line = document.createElement("div");
             line.className = "ln";
             const pr = document.createElement("span");
