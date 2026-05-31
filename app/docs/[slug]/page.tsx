@@ -4,7 +4,7 @@ import DocNav from "@/components/DocNav";
 import Toc from "@/components/Toc";
 import CliReference from "@/components/CliReference";
 import { EYEBROWS, GH, ORDER, PAGES, docParts, headings, slugify } from "@/lib/docs";
-import { getReleases } from "@/lib/github";
+import { getChangelog } from "@/lib/github";
 
 function fmtDate(iso: string): string {
   if (!iso) return "";
@@ -37,9 +37,9 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   const isCli = slug === "cli-reference";
   const isChangelog = slug === "changelog";
   const parts = docParts(slug);
-  const releases = isChangelog ? await getReleases() : null;
+  const entries = isChangelog ? await getChangelog() : null;
   const items = isChangelog
-    ? (releases || []).map((r) => ({ id: slugify(r.tag), text: r.tag, level: 2 }))
+    ? (entries || []).map((e) => ({ id: slugify(e.tag), text: e.tag, level: 2 }))
     : headings(slug);
 
   return (
@@ -58,18 +58,17 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
             </>
           ) : isChangelog ? (
             <>
-              <p className="lead">What&apos;s new in Rekord — straight from the GitHub releases.</p>
-              {releases && releases.length > 0 ? (
-                releases.map((r) => (
-                  <section key={r.tag}>
-                    <h2 id={slugify(r.tag)}>{r.tag}</h2>
-                    <p>
-                      {r.date && <strong>{fmtDate(r.date)}</strong>}
-                      {r.date && " · "}
-                      <a className="inl" href={r.url} target="_blank" rel="noopener">
-                        view release ↗
-                      </a>
-                    </p>
+              <p className="lead">What&apos;s new in Rekord — straight from the CHANGELOG.</p>
+              {entries && entries.length > 0 ? (
+                entries.map((e) => (
+                  <section key={e.tag}>
+                    <h2 id={slugify(e.tag)}>{e.tag}</h2>
+                    {e.date && (
+                      <p>
+                        <strong>{fmtDate(e.date)}</strong>
+                      </p>
+                    )}
+                    <div dangerouslySetInnerHTML={{ __html: e.bodyHtml }} />
                   </section>
                 ))
               ) : (
