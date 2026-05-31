@@ -1,7 +1,7 @@
 /* ────────────────────────────────────────────────────────────────────
    CliReference — command tree rendered as reference cards
    ──────────────────────────────────────────────────────────────────── */
-import { REKORD_CLI } from "@/lib/cli";
+import { COMMON_FLAGS, REKORD_CLI } from "@/lib/cli";
 
 function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -13,6 +13,19 @@ function synHi(s: string) {
 export default function CliReference() {
   return (
     <div id="cliHost">
+      <div className="callout note">
+        <div className="ch">▋ common flags</div>
+        <p>
+          Most session commands also accept{" "}
+          {COMMON_FLAGS.map((f, i) => (
+            <span key={f[0]}>
+              <code className="ic">{f[0]}</code>
+              {i < COMMON_FLAGS.length - 1 ? " and " : ""}
+            </span>
+          ))}
+          {" "}— {COMMON_FLAGS.map((f) => f[1].replace(/\.$/, "")).join("; ").toLowerCase()}.
+        </p>
+      </div>
       {REKORD_CLI.map((grp) => (
         <div className="cli-group" key={grp.label}>
           <p className="cgl">{grp.label}</p>

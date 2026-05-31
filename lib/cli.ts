@@ -1,5 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════
    cli.ts — rekord command tree → reference cards & search index
+   Mirrors the real cobra commands in internal/cli/*.go (v0.1.x).
    ════════════════════════════════════════════════════════════════════ */
 export type Command = {
   name: string;
@@ -12,35 +13,36 @@ export type CommandGroup = {
   commands: Command[];
 };
 
+/* Most commands also accept these. Listed once here instead of on every card. */
+export const COMMON_FLAGS: [string, string][] = [
+  ["--root", "Sessions directory (default ~/.rekord/sessions)."],
+  ["--config", "Config file path (default ~/.rekord/rekord.yaml)."],
+];
+
 export const REKORD_CLI: CommandGroup[] = [
   {
     label: "// recording",
     commands: [
       {
         name: "start",
-        purpose: "Begin a recording session in the current shell.",
-        synopsis: "rekord start [--name <id>] [--tag <t>] [--timer <dur>] [--shell <sh>]",
+        purpose: "Record an interactive terminal session in the current shell.",
+        synopsis: "rekord start --name <id> [--timer <dur>] [--stop-key <key>] [--shell <sh>] [--cwd <dir>]",
         flags: [
-          ["--name", "Human-readable session id. Auto-generated if omitted."],
-          ["--tag", "Attach one or more tags for later filtering."],
-          ["--timer", "Auto-stop after a duration (e.g. 5m, 90s)."],
-          ["--shell", "Override the recorded shell (bash, zsh, fish)."],
+          ["--name", "Recording name (required)."],
+          ["--timer", "Auto-stop after a duration (e.g. 40s, 5m)."],
+          ["--stop-key", "Hotkey to stop recording (e.g. ctrl-x); overrides config."],
+          ["--shell", "Shell to record (default: $SHELL)."],
+          ["--cwd", "Working directory for the recorded shell."],
         ],
       },
       {
         name: "run",
         purpose: "Record a single command without a long-lived session.",
-        synopsis: 'rekord run "<command>" [--name <id>] [--tag <t>]',
+        synopsis: "rekord run --name <id> -- <command> [args...]",
         flags: [
-          ["--name", "Name the one-shot session."],
-          ["--tag", "Tag the recording."],
+          ["--name", "Recording name (required)."],
+          ["--cwd", "Working directory for the recorded command."],
         ],
-      },
-      {
-        name: "stop",
-        purpose: "End the active session and flush it to storage.",
-        synopsis: "rekord stop [--discard]",
-        flags: [["--discard", "Throw away the recording instead of saving."]],
       },
     ],
   },
@@ -50,27 +52,20 @@ export const REKORD_CLI: CommandGroup[] = [
       {
         name: "list",
         purpose: "List recorded sessions, newest first.",
-        synopsis: "rekord list [--tag <t>] [--json] [--limit <n>]",
-        flags: [
-          ["--tag", "Filter to sessions carrying a tag."],
-          ["--json", "Emit machine-readable JSON."],
-          ["--limit", "Cap the number of rows returned."],
-        ],
+        synopsis: "rekord list [--root <dir>]",
+        flags: [["--root", "Sessions directory to list."]],
       },
       {
         name: "replay",
-        purpose: "Replay a session in the terminal at recorded timing.",
-        synopsis: "rekord replay <session> [--speed <x>] [--no-timing]",
-        flags: [
-          ["--speed", "Playback multiplier (e.g. 2 for 2×)."],
-          ["--no-timing", "Print instantly, ignore recorded delays."],
-        ],
+        purpose: "Replay a recorded session in the terminal with original timing.",
+        synopsis: "rekord replay <session> [--speed <x>]",
+        flags: [["--speed", "Playback speed multiplier (default 1.0)."]],
       },
       {
-        name: "show",
-        purpose: "Print a session’s metadata and command summary.",
-        synopsis: "rekord show <session> [--json]",
-        flags: [["--json", "Emit the full session record as JSON."]],
+        name: "commands",
+        purpose: "Show the commands extracted from a recorded session.",
+        synopsis: "rekord commands <session> [--json]",
+        flags: [["--json", "Emit the extracted commands as JSON."]],
       },
     ],
   },
@@ -79,13 +74,14 @@ export const REKORD_CLI: CommandGroup[] = [
     commands: [
       {
         name: "export",
-        purpose: "Export a session to any supported format.",
-        synopsis: "rekord export <session> --to <fmt> [--output <path>] [--include-output]",
+        purpose: "Export a recorded session to any supported format.",
+        synopsis: "rekord export <session> [--to <fmt>] [-o <path>] [--redact]",
         flags: [
-          ["--to", "Target: cast · markdown · json · script · gif · mp4."],
-          ["--output", "Write to a specific file path."],
-          ["--include-output", "Embed captured stdout/stderr in the export."],
-          ["--theme", "Color theme for gif/mp4 renders."],
+          ["--to", "Format: cast · json · markdown · script · gif · mp4 (default cast)."],
+          ["-o, --output", "Write to a specific file path."],
+          ["--size", "mp4 size preset: 720p or 1080p (default 720p)."],
+          ["--redact", "Redact secrets in the export."],
+          ["--no-redact", "Disable redaction even if enabled in config."],
         ],
       },
     ],
@@ -95,13 +91,13 @@ export const REKORD_CLI: CommandGroup[] = [
     commands: [
       {
         name: "handoff",
-        purpose: "Build an AI-ready context bundle from a session.",
-        synopsis: "rekord handoff <session> [--include-output] [--include-env] [--include-diff]",
+        purpose: "Generate an AI-ready context bundle from a session.",
+        synopsis: "rekord handoff <session> [--include-git] [--include-tree] [--include-logs] [--copy]",
         flags: [
-          ["--include-output", "Include command output in the bundle."],
-          ["--include-env", "Include sanitized environment context."],
-          ["--include-diff", "Include the working-tree diff at record time."],
-          ["--to", "Bundle format: markdown (default) or json."],
+          ["--include-git", "Include git status and diff context."],
+          ["--include-tree", "Include a repository tree snapshot."],
+          ["--include-logs", "Include captured session logs."],
+          ["--copy", "Copy the context to the clipboard."],
         ],
       },
     ],
@@ -111,13 +107,9 @@ export const REKORD_CLI: CommandGroup[] = [
     commands: [
       {
         name: "scan",
-        purpose: "Scan a session for secrets before you share it.",
-        synopsis: "rekord scan [<session>] [--fix] [--patterns <file>]",
-        flags: [
-          ["--fix", "Redact matches in place with ■ markers."],
-          ["--patterns", "Load additional secret patterns from a file."],
-          ["--strict", "Exit non-zero if any match is found."],
-        ],
+        purpose: "Scan a session for possible secrets before you share it.",
+        synopsis: "rekord scan <session> [--strict]",
+        flags: [["--strict", "Exit non-zero if any secrets are found."]],
       },
     ],
   },
@@ -125,19 +117,34 @@ export const REKORD_CLI: CommandGroup[] = [
     label: "// tmux",
     commands: [
       {
-        name: "tmux start",
-        purpose: "Record an attached tmux session pane-by-pane.",
-        synopsis: "rekord tmux start [--name <id>] [--target <pane>]",
-        flags: [
-          ["--name", "Name the tmux recording."],
-          ["--target", "Restrict capture to a single pane."],
-        ],
+        name: "tmux status",
+        purpose: "Show whether the current shell is inside tmux.",
+        synopsis: "rekord tmux status",
+        flags: [],
       },
       {
         name: "tmux capture",
-        purpose: "Snapshot the current tmux pane buffers.",
-        synopsis: "rekord tmux capture [--target <pane>]",
-        flags: [["--target", "Pane to capture (default: active)."]],
+        purpose: "Capture a tmux pane's current contents as a session.",
+        synopsis: "rekord tmux capture --pane <pane> --name <id>",
+        flags: [
+          ["--pane", "tmux pane or session target (required)."],
+          ["--name", "Recording name (required)."],
+        ],
+      },
+      {
+        name: "tmux record",
+        purpose: "Stream a tmux pane into a recording via pipe-pane.",
+        synopsis: "rekord tmux record --pane <pane> --name <id>",
+        flags: [
+          ["--pane", "tmux pane or session target (required)."],
+          ["--name", "Recording name (required)."],
+        ],
+      },
+      {
+        name: "tmux start",
+        purpose: "Create a tmux session, record it, and attach.",
+        synopsis: "rekord tmux start --session <name>",
+        flags: [["--session", "tmux session name (required)."]],
       },
     ],
   },
@@ -146,37 +153,46 @@ export const REKORD_CLI: CommandGroup[] = [
     commands: [
       {
         name: "skills list",
-        purpose: "List available recording skills, built-in and local.",
-        synopsis: "rekord skills list [--json]",
-        flags: [["--json", "Emit the skill registry as JSON."]],
+        purpose: "List available recording recipes, built-in and local.",
+        synopsis: "rekord skills list [--skills-dir <dir>]",
+        flags: [["--skills-dir", "Local skills directory (default .rekord/skills)."]],
       },
       {
         name: "skills run",
-        purpose: "Run a named skill against a session.",
-        synopsis: "rekord skills run <skill> <session> [--arg key=val]",
-        flags: [["--arg", "Pass a key=value argument to the skill."]],
+        purpose: "Run a skill recipe and record it as a session.",
+        synopsis: "rekord skills run <skill> [--name <id>] [--skills-dir <dir>]",
+        flags: [
+          ["--name", "Recording name (defaults to the skill name)."],
+          ["--skills-dir", "Local skills directory (default .rekord/skills)."],
+        ],
       },
     ],
   },
   {
-    label: "// configuration",
+    label: "// system",
     commands: [
       {
         name: "config",
-        purpose: "Print or edit the resolved rekord configuration.",
-        synopsis: "rekord config [get <key> | set <key> <val> | edit | path]",
+        purpose: "View and edit the resolved rekord configuration.",
+        synopsis: "rekord config [get <key> | set <key> <val> | view | path]",
         flags: [
-          ["get", "Print a single resolved config value."],
-          ["set", "Write a value to rekord.yaml."],
-          ["edit", "Open rekord.yaml in $EDITOR."],
-          ["path", "Print the active config file path."],
+          ["get", "Print a config value (recording.stopKey, privacy.redact)."],
+          ["set", "Set a config value, creating rekord.yaml if needed."],
+          ["view", "Print the merged configuration."],
+          ["path", "Print the resolved config file path."],
         ],
       },
       {
+        name: "doctor",
+        purpose: "Check for optional external tools (agg for gif, ffmpeg for mp4).",
+        synopsis: "rekord doctor",
+        flags: [],
+      },
+      {
         name: "version",
-        purpose: "Print the rekord version and build info.",
-        synopsis: "rekord version [--json]",
-        flags: [["--json", "Emit version, commit and build date as JSON."]],
+        purpose: "Print the Rekord version.",
+        synopsis: "rekord version",
+        flags: [],
       },
     ],
   },

@@ -8,18 +8,18 @@ type Line = { c: string } | { o: string; k: string };
 
 const SESSION: Line[] = [
   { c: "rekord start --name monocron-demo" },
-  { o: '● recording session "monocron-demo"  ·  press ⌥⇧R to stop', k: "amber" },
+  { o: '● recording session "monocron-demo"  ·  press Ctrl-] to stop', k: "amber" },
   { c: "go test ./..." },
   { o: "ok  github.com/monocron/app  0.231s", k: "ok" },
-  { c: 'rekord run "git status"' },
+  { c: "rekord run --name status -- git status" },
   { o: " M  internal/record/session.go", k: "out" },
   { o: "?? docs/demo.md", k: "dim" },
-  { c: "rekord scan" },
+  { c: "rekord scan monocron-demo" },
   { o: "✓ no secrets found  ·  3 patterns checked", k: "ok" },
   { c: "rekord export monocron-demo --to markdown" },
   { o: "✓ wrote demo.md  ·  5 commands · 42 lines", k: "ok" },
-  { c: "rekord handoff monocron-demo --include-output" },
-  { o: "✓ context bundle → handoff.md  ·  ready for your agent", k: "info" },
+  { c: "rekord handoff monocron-demo --include-git --copy" },
+  { o: "✓ context bundle → handoff/context.md  ·  copied", k: "info" },
 ];
 
 function esc(s: string) {
