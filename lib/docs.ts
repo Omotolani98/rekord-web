@@ -84,8 +84,10 @@ const RAW: Record<string, string> = {
 <span class="o-ok">✓ installed rekord 0.6.0 → /usr/local/bin/rekord</span></pre>
 </div>
 <div class="codeblock">
-  <button class="copy-btn" data-copy="brew install rekord"></button>
-  <pre><span class="pr">$ </span><span class="ct">brew install rekord</span>          <span class="cm"># macOS / Linuxbrew</span>
+  <button class="copy-btn" data-copy="brew tap Omotolani98/rekord
+brew install rekord"></button>
+  <pre><span class="pr">$ </span><span class="ct">brew tap Omotolani98/rekord</span>   <span class="cm"># macOS / Linuxbrew</span>
+<span class="pr">$ </span><span class="ct">brew install rekord</span>
 <span class="pr">$ </span><span class="ct">go install github.com/Omotolani98/rekord@latest</span>  <span class="cm"># from source</span></pre>
 </div>
 <p>Confirm it's on your <code class="ic">PATH</code>:</p>
