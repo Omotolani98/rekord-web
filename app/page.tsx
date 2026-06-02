@@ -1,5 +1,6 @@
 import Link from "next/link";
 import TerminalHero from "@/components/TerminalHero";
+import RekordMark from "@/components/RekordMark";
 import { GH } from "@/lib/docs";
 
 const ARROW = (
@@ -159,8 +160,8 @@ export default function Home() {
       <footer className="foot">
         <div className="wrap foot-grid">
           <div>
-            <Link className="brand" href="/">
-              <b>rekord</b>
+            <Link className="brand" href="/" aria-label="rekord — home">
+              <RekordMark />
               <span className="cursor" />
             </Link>
             <p>Record what you build. Export what you learned. Handoff context to AI.</p>

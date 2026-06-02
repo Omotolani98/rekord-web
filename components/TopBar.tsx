@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { GH } from "@/lib/docs";
 import { formatStars } from "@/lib/github";
+import RekordMark from "@/components/RekordMark";
 
 const SUN = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -57,8 +58,8 @@ export default function TopBar({ stars }: { stars: number | null }) {
           <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>
       </div>
-      <Link className="brand" href="/">
-        <b>rekord</b>
+      <Link className="brand" href="/" aria-label="rekord — home">
+        <RekordMark />
         <span className="cursor" />
       </Link>
       <nav className="topnav">

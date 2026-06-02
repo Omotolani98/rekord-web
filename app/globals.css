@@ -120,8 +120,8 @@ a{color:var(--link);text-decoration:none}
   font-family:var(--font-display);font-weight:700;font-size:18px;
   color:var(--text);letter-spacing:-0.01em;cursor:pointer;
 }
-.brand b{font-weight:700}
-.brand .cursor{height:.9em;width:.5ch;margin-left:.18ch}
+.brand svg{display:block;width:22px;height:22px}
+.brand .cursor{align-self:center;height:.9em;width:.5ch;margin-left:.1ch}
 
 .topnav{display:flex;align-items:center;gap:4px;margin-left:8px}
 .topnav a{
