@@ -13,6 +13,8 @@ export const PAGES: Record<string, string> = {
   redaction: "Redaction & Security",
   tmux: "tmux",
   skills: "Skills",
+  mcp: "Live agent control (MCP)",
+  "persistent-sessions": "Persistent sessions",
   configuration: "Configuration",
   "cli-reference": "CLI Reference",
   changelog: "Changelog",
@@ -29,6 +31,8 @@ export const EYEBROWS: Record<string, string> = {
   redaction: "redaction & security",
   tmux: "tmux",
   skills: "skills",
+  mcp: "live agent control",
+  "persistent-sessions": "persistent sessions",
   configuration: "configuration",
   "cli-reference": "cli reference",
   changelog: "changelog",
@@ -297,6 +301,11 @@ brew install rekord"></button>
 <div class="callout security">
   <div class="ch">▋ security</div>
   <p>Handoff bundles are designed to be pasted into a chat or agent. Always <code class="ic">rekord scan</code> before sharing context that touched credentials.</p>
+</div>
+
+<div class="callout note">
+  <div class="ch">▋ see also</div>
+  <p><a class="inl" href="/docs/mcp">Live agent control (MCP)</a> is the live counterpart to handoff — handoff bundles a session after the fact; MCP drives and records it as it happens.</p>
 </div>`,
 
   redaction: `
@@ -417,6 +426,120 @@ brew install rekord"></button>
 <div class="callout note">
   <div class="ch">▋ note</div>
   <p>Config resolves in order: built-in defaults → <code class="ic">rekord.yaml</code> → command-line flags. Flags always win.</p>
+</div>`,
+
+  mcp: `
+<p class="lead"><code class="ic">rekord mcp</code> runs a <a class="inl" href="https://modelcontextprotocol.io" target="_blank" rel="noopener">Model Context Protocol</a> server over stdio. An AI agent (Claude Code, Cursor, …) launches terminal programs, sends input, waits for output, and reads a <strong>deterministic screen frame</strong> — instead of guessing from a raw byte stream. Every agent session is also recorded, so you can <code class="ic">export</code>, <code class="ic">replay</code>, and <code class="ic">handoff</code> it afterward.</p>
+
+<h2>Start the server</h2>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord mcp"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord mcp</span></pre>
+</div>
+<table class="flags">
+  <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+  <tbody>
+    <tr><td class="f">--root</td><td class="d">~/.rekord/sessions</td><td class="d">Where sessions are recorded.</td></tr>
+    <tr><td class="f">--config</td><td class="d">~/.rekord/rekord.yaml</td><td class="d">Config file (redaction patterns).</td></tr>
+    <tr><td class="f">--no-redact</td><td class="d">false</td><td class="d">Disable redaction of captures and logs.</td></tr>
+  </tbody>
+</table>
+
+<h2>Register with Claude Code</h2>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="claude mcp add rekord -- rekord mcp"></button>
+  <pre><span class="pr">$ </span><span class="ct">claude mcp add rekord -- rekord mcp</span></pre>
+</div>
+<p>Or add it to your MCP client config:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy='{
+  "mcpServers": {
+    "rekord": { "command": "rekord", "args": ["mcp"] }
+  }
+}'></button>
+  <pre>{
+  <span class="st">"mcpServers"</span>: {
+    <span class="st">"rekord"</span>: { <span class="st">"command"</span>: <span class="o">"rekord"</span>, <span class="st">"args"</span>: [<span class="o">"mcp"</span>] }
+  }
+}</pre>
+</div>
+
+<h2>Tools</h2>
+<table class="flags">
+  <thead><tr><th>tool</th><th>purpose</th></tr></thead>
+  <tbody>
+    <tr><td class="f">launch</td><td class="d">Start a program in a new session (<code class="ic">name</code>, <code class="ic">command</code>, <code class="ic">cols</code>, <code class="ic">rows</code>, <code class="ic">cwd</code>, <code class="ic">env</code>).</td></tr>
+    <tr><td class="f">send</td><td class="d">Send <code class="ic">text</code> and/or named <code class="ic">keys</code> (<code class="ic">enter</code>, <code class="ic">tab</code>, <code class="ic">esc</code>, <code class="ic">ctrl-c</code>, arrows, …).</td></tr>
+    <tr><td class="f">capture</td><td class="d">Return the current screen frame (grid + cursor). <code class="ic">raw: true</code> for unredacted text.</td></tr>
+    <tr><td class="f">wait_text</td><td class="d">Block until the screen contains <code class="ic">text</code>, the process exits, or <code class="ic">timeoutMs</code> elapses.</td></tr>
+    <tr><td class="f">wait_idle</td><td class="d">Block until output is quiet for <code class="ic">quietMs</code>.</td></tr>
+    <tr><td class="f">wait_exit</td><td class="d">Block until the process exits.</td></tr>
+    <tr><td class="f">logs</td><td class="d">Return the retained output transcript (<code class="ic">maxBytes</code>, <code class="ic">raw</code>).</td></tr>
+    <tr><td class="f">resize</td><td class="d">Resize the terminal viewport.</td></tr>
+    <tr><td class="f">stop</td><td class="d">Terminate a session and finalize its recording.</td></tr>
+    <tr><td class="f">list / status</td><td class="d">Inspect active and finished sessions.</td></tr>
+  </tbody>
+</table>
+<p>Every wait returns a <code class="ic">reason</code>: <code class="ic">matched</code>, <code class="ic">idle</code>, <code class="ic">exited</code>, or <code class="ic">deadline</code>.</p>
+
+<h2>Example flow</h2>
+<ol>
+  <li><code class="ic">launch</code> — <code class="ic">{ "name": "build", "command": ["npm", "run", "dev"] }</code></li>
+  <li><code class="ic">wait_text</code> — <code class="ic">{ "name": "build", "text": "ready in", "timeoutMs": 30000 }</code></li>
+  <li><code class="ic">capture</code> — <code class="ic">{ "name": "build" }</code> → inspect the frame</li>
+  <li><code class="ic">stop</code> — <code class="ic">{ "name": "build" }</code></li>
+</ol>
+
+<div class="callout security">
+  <div class="ch">▋ privacy</div>
+  <p><code class="ic">capture</code> and <code class="ic">logs</code> are redacted with your configured patterns by default. Pass <code class="ic">raw: true</code> (or start the server with <code class="ic">--no-redact</code>) only when you need the unredacted screen — transcripts may contain secrets.</p>
+</div>`,
+
+  "persistent-sessions": `
+<p class="lead"><code class="ic">rekord session</code> runs a named terminal program as a <strong>detached background session</strong> reachable over an owner-only unix socket (<code class="ic">&lt;root&gt;/&lt;name&gt;.sock</code>, mode <code class="ic">0600</code>). Any later command — from any process — drives the same live session. The session keeps its final screen after the program exits, until you <code class="ic">stop</code> it. Like all rekord sessions, it is recorded for <code class="ic">export</code> / <code class="ic">replay</code> / <code class="ic">handoff</code>.</p>
+
+<h2>Lifecycle</h2>
+<p>Launch a detached session:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord session start --name demo --cols 80 --rows 24 -- htop"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord session start <span class="fl">--name</span> demo <span class="fl">--cols</span> 80 <span class="fl">--rows</span> 24 -- <span class="st">htop</span></span></pre>
+</div>
+<p>Drive it from separate commands:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord session status --name demo"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord session status <span class="fl">--name</span> demo</span>
+<span class="pr">$ </span><span class="ct">rekord session send   <span class="fl">--name</span> demo <span class="st">"q"</span></span>
+<span class="pr">$ </span><span class="ct">rekord session send   <span class="fl">--name</span> demo <span class="fl">--key</span> ctrl-c</span>
+<span class="pr">$ </span><span class="ct">rekord session show   <span class="fl">--name</span> demo</span>            <span class="cm"># current screen (text)</span>
+<span class="pr">$ </span><span class="ct">rekord session show   <span class="fl">--name</span> demo <span class="fl">--format</span> json</span>
+<span class="pr">$ </span><span class="ct">rekord session wait   <span class="fl">--name</span> demo <span class="fl">--text</span> <span class="st">"Done"</span> <span class="fl">--timeout</span> 30s</span>
+<span class="pr">$ </span><span class="ct">rekord session wait   <span class="fl">--name</span> demo <span class="fl">--idle</span> 500ms</span>
+<span class="pr">$ </span><span class="ct">rekord session wait   <span class="fl">--name</span> demo <span class="fl">--exit</span></span></pre>
+</div>
+<p>Inspect and tear down:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord session list"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord session list</span>
+<span class="pr">$ </span><span class="ct">rekord session stop <span class="fl">--name</span> demo</span></pre>
+</div>
+
+<h2>Commands</h2>
+<table class="flags">
+  <thead><tr><th>command</th><th>description</th></tr></thead>
+  <tbody>
+    <tr><td class="f">start</td><td class="d">Launch a detached session after <code class="ic">--</code>. Flags: <code class="ic">--name</code>, <code class="ic">--cols</code>, <code class="ic">--rows</code>, <code class="ic">--cwd</code>.</td></tr>
+    <tr><td class="f">send</td><td class="d">Send text (positional) and/or <code class="ic">--key</code> (repeatable).</td></tr>
+    <tr><td class="f">show</td><td class="d">Print the current frame (<code class="ic">--format text|json</code>).</td></tr>
+    <tr><td class="f">wait</td><td class="d"><code class="ic">--text</code>, <code class="ic">--idle &lt;dur&gt;</code>, or <code class="ic">--exit</code>; <code class="ic">--timeout</code>.</td></tr>
+    <tr><td class="f">status / list</td><td class="d">Show one or all running sessions.</td></tr>
+    <tr><td class="f">stop</td><td class="d">Terminate and finalize the recording.</td></tr>
+  </tbody>
+</table>
+<p>All commands accept <code class="ic">--root</code> (default <code class="ic">~/.rekord/sessions</code>).</p>
+
+<div class="callout note">
+  <div class="ch">▋ note</div>
+  <p>Recorded under <code class="ic">--root</code> like any session, so afterward: <code class="ic">rekord export &lt;id&gt; --to markdown</code>, <code class="ic">rekord replay &lt;id&gt;</code>, <code class="ic">rekord handoff &lt;id&gt;</code>.</p>
 </div>`,
 
   /* changelog is rendered dynamically from the repo CHANGELOG.md — see

@@ -169,6 +169,80 @@ export const REKORD_CLI: CommandGroup[] = [
     ],
   },
   {
+    label: "// ai & automation",
+    commands: [
+      {
+        name: "mcp",
+        purpose: "Run a Model Context Protocol server over stdio so AI agents can drive terminals.",
+        synopsis: "rekord mcp [--root <dir>] [--config <path>] [--no-redact]",
+        flags: [
+          ["--root", "Sessions directory (default ~/.rekord/sessions)."],
+          ["--config", "Config file with redaction patterns."],
+          ["--no-redact", "Disable redaction of captures and logs."],
+        ],
+      },
+      {
+        name: "session start",
+        purpose: "Launch a detached, named background session reachable over a unix socket.",
+        synopsis: "rekord session start --name <id> [--cols <n>] [--rows <n>] [--cwd <dir>] -- <command> [args...]",
+        flags: [
+          ["--name", "Session name (required)."],
+          ["--cols", "Terminal width in columns."],
+          ["--rows", "Terminal height in rows."],
+          ["--cwd", "Working directory for the program."],
+        ],
+      },
+      {
+        name: "session send",
+        purpose: "Send text and/or named keys to a running session.",
+        synopsis: "rekord session send --name <id> [text] [--key <key>]...",
+        flags: [
+          ["--name", "Session name (required)."],
+          ["--key", "Named key to send (e.g. enter, ctrl-c); repeatable."],
+        ],
+      },
+      {
+        name: "session show",
+        purpose: "Print the current screen frame of a session.",
+        synopsis: "rekord session show --name <id> [--format text|json]",
+        flags: [
+          ["--name", "Session name (required)."],
+          ["--format", "Output format: text or json (default text)."],
+        ],
+      },
+      {
+        name: "session wait",
+        purpose: "Block until a session matches text, goes idle, or exits.",
+        synopsis: "rekord session wait --name <id> [--text <s>] [--idle <dur>] [--exit] [--timeout <dur>]",
+        flags: [
+          ["--name", "Session name (required)."],
+          ["--text", "Wait until the screen contains this text."],
+          ["--idle", "Wait until output is quiet for a duration."],
+          ["--exit", "Wait until the process exits."],
+          ["--timeout", "Give up after a duration."],
+        ],
+      },
+      {
+        name: "session status",
+        purpose: "Show the state of one running session.",
+        synopsis: "rekord session status --name <id>",
+        flags: [["--name", "Session name (required)."]],
+      },
+      {
+        name: "session list",
+        purpose: "List all running detached sessions.",
+        synopsis: "rekord session list",
+        flags: [],
+      },
+      {
+        name: "session stop",
+        purpose: "Terminate a session and finalize its recording.",
+        synopsis: "rekord session stop --name <id>",
+        flags: [["--name", "Session name (required)."]],
+      },
+    ],
+  },
+  {
     label: "// system",
     commands: [
       {

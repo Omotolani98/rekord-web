@@ -23,6 +23,9 @@ const FEATURES: [string, string, React.ReactNode][] = [
   ["// portable", "One binary, no deps", "A single static Go executable. No runtime, no daemon, no account. Drop it on any box and record."],
   ["// replay", "Faithful playback", "Replay at recorded timing, or export to GIF and MP4 for docs, READMEs and release notes."],
   ["// local", "Yours, on disk", "Sessions live in a plain, inspectable layout under your home directory. Zero telemetry, ever."],
+  ["// agents", "Live agent control", <>
+    Drive terminals from an AI agent over <code className="ic">rekord mcp</code>, with deterministic screen capture.
+  </>],
 ];
 
 const FAN_OUTS: [string, string, string][] = [

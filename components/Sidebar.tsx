@@ -31,6 +31,13 @@ const GROUPS: { label: string; links: [string, string][] }[] = [
     ],
   },
   {
+    label: "// ai & automation",
+    links: [
+      ["mcp", "Live agent control (MCP)"],
+      ["persistent-sessions", "Persistent sessions"],
+    ],
+  },
+  {
     label: "// reference",
     links: [
       ["configuration", "Configuration"],
