@@ -43,6 +43,8 @@ function inline(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/`([^`]+)`/g, '<code class="ic">$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
     .replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
       '<a class="inl" href="$2" target="_blank" rel="noopener">$1</a>',
