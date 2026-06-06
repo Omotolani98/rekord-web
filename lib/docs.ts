@@ -369,6 +369,22 @@ rekord resume"></button>
   <pre><span class="pr">$ </span><span class="ct">rekord resume <span class="fl">--from-agent</span>=claude <span class="fl">--to-agent</span>=codex</span></pre>
 </div>
 <p>The output includes the latest snapshot, relevant memories, changed files, patch files, blockers, and continuation context.</p>
+<p><code class="ic">--agent</code>, <code class="ic">--from-agent</code>, <code class="ic">--to-agent</code>, and <code class="ic">--session</code> shape a handoff:</p>
+<table class="flags">
+  <thead><tr><th>flag</th><th>effect</th></tr></thead>
+  <tbody>
+    <tr><td class="f">--agent &lt;name&gt;</td><td class="d">Filters results to memory written by that agent.</td></tr>
+    <tr><td class="f">--from-agent &lt;name&gt;</td><td class="d">Label for the source agent. Does not filter — context is project-wide.</td></tr>
+    <tr><td class="f">--to-agent &lt;name&gt;</td><td class="d">Label for the intended next agent. Does not filter.</td></tr>
+    <tr><td class="f">--session &lt;name&gt;</td><td class="d">Filters to a named session.</td></tr>
+  </tbody>
+</table>
+<p>So <code class="ic">--from-agent</code> / <code class="ic">--to-agent</code> are metadata only: they never hide another agent's memory. A handoff returns all of the project's open and recent memory, labeled <span class="o">claude → codex</span>:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord resume --from-agent claude --to-agent codex"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord resume <span class="fl">--from-agent</span> claude <span class="fl">--to-agent</span> codex</span></pre>
+</div>
+<p>To see just one writer's memory, use <code class="ic">--agent &lt;name&gt;</code>. The same flags apply to <code class="ic">recall</code>, <code class="ic">memory list</code>, and <code class="ic">memory search</code>.</p>
 
 <h2>Named sessions</h2>
 <p>Agents can name Rekord sessions and tell users how to resume them.</p>
@@ -397,6 +413,43 @@ rekord snapshot --agent=claude --session=memory-mvp-claude "Stopped after debugg
   <pre><span class="o">~/.rekord/projects/&lt;project-hash&gt;/patches/</span></pre>
 </div>
 <p>This makes snapshots useful for review, recovery, and handoff.</p>
+
+<h2>Projects and storage</h2>
+<p>Rekord memory is per project, stored user-local under <code class="ic">~/.rekord/projects/&lt;storage-key&gt;/</code>:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="~/.rekord/projects/&lt;storage-key&gt;/
+  memories.jsonl     # all memories for the project
+  project.json       # { &quot;path&quot;: &quot;...&quot;, &quot;key&quot;: &quot;...&quot; }
+  patches/           # snapshot git patches
+  snapshots/         # snapshot metadata"></button>
+  <pre><span class="o">~/.rekord/projects/&lt;storage-key&gt;/</span>
+<span class="o">  memories.jsonl     <span class="cm"># all memories for the project</span></span>
+<span class="o">  project.json       <span class="cm"># { "path": "...", "key": "..." }</span></span>
+<span class="o">  patches/           <span class="cm"># snapshot git patches</span></span>
+<span class="o">  snapshots/         <span class="cm"># snapshot metadata</span></span></pre>
+</div>
+<p>The storage key is derived from the project's git repository root. Any working directory inside the repo — top level or a deep subdirectory — resolves to the same key. This is what lets different tools (Claude Code, OpenCode, Cursor, …) share one project's memory even when each launches <code class="ic">rekord mcp</code> from a different directory.</p>
+<p>Projects outside a git repository fall back to the absolute path of the directory.</p>
+<p>List every project that has stored memory:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord memory projects"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord memory projects</span>
+<span class="o">70eb5d71578c8d85  /Users/you/code/myapp</span>
+<span class="o">a1b2c3d4e5f60718  /Users/you/code/other</span></pre>
+</div>
+<p>Agents can read the same listing via the <code class="ic">memory_projects</code> MCP tool.</p>
+<p><code class="ic">rekord resume</code> prints the resolved storage key so you can confirm which folder a session reads and writes:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord resume"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord resume</span>
+<span class="o">Project: /Users/you/code/myapp</span>
+<span class="o">Storage key: 70eb5d71578c8d85</span></pre>
+</div>
+
+<div class="callout note">
+  <div class="ch">▋ migration (from &lt; 0.3.1)</div>
+  <p>Before v0.3.1 the storage key was the hash of the directory that launched the MCP server, so memory could scatter across folders. Old folders are not migrated automatically — run <code class="ic">rekord memory projects</code> to find them and move them under the git-root key if you need that history.</p>
+</div>
 
 <h2>Commands</h2>
 <div class="codeblock">
@@ -432,6 +485,7 @@ rekord memory resolve &lt;id&gt;"></button>
     <tr><td class="f">memory_list</td><td class="d">List memories.</td></tr>
     <tr><td class="f">memory_get</td><td class="d">Read one memory by id.</td></tr>
     <tr><td class="f">memory_resolve</td><td class="d">Mark a memory or blocker resolved.</td></tr>
+    <tr><td class="f">memory_projects</td><td class="d">List every project that has stored memory.</td></tr>
     <tr><td class="f">snapshot_create</td><td class="d">Capture git-aware project state.</td></tr>
     <tr><td class="f">resume_context</td><td class="d">Return latest snapshot, relevant memories, changed files, patches, blockers, and continuation context.</td></tr>
   </tbody>
@@ -639,6 +693,7 @@ Resume with the next agent."></button>
     <tr><td class="f">memory_list</td><td class="d">List memories.</td></tr>
     <tr><td class="f">memory_get</td><td class="d">Read one memory by id.</td></tr>
     <tr><td class="f">memory_resolve</td><td class="d">Mark a memory or blocker resolved.</td></tr>
+    <tr><td class="f">memory_projects</td><td class="d">List every project that has stored memory.</td></tr>
     <tr><td class="f">snapshot_create</td><td class="d">Capture git-aware project state.</td></tr>
     <tr><td class="f">resume_context</td><td class="d">Return latest snapshot, relevant memories, changed files, patches, blockers, and continuation context.</td></tr>
   </tbody>
