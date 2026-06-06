@@ -20,6 +20,7 @@ const GROUPS: { label: string; links: [string, string][] }[] = [
     links: [
       ["exporting", "Exporting"],
       ["handoff", "AI Handoff"],
+      ["memory", "Memory"],
     ],
   },
   { label: "// safety", links: [["redaction", "Redaction & Security"]] },

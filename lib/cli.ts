@@ -103,6 +103,76 @@ export const REKORD_CLI: CommandGroup[] = [
     ],
   },
   {
+    label: "// memory",
+    commands: [
+      {
+        name: "remember",
+        purpose: "Store a durable project memory for later agents or sessions.",
+        synopsis: "rekord remember <text> [--agent <name>] [--session <id>]",
+        flags: [
+          ["--agent", "Agent name to associate with the memory."],
+          ["--session", "Named Rekord session to link this memory to."],
+        ],
+      },
+      {
+        name: "recall",
+        purpose: "Search project memory.",
+        synopsis: "rekord recall [query] [--agent <name>]",
+        flags: [["--agent", "Limit results to memories from one agent."]],
+      },
+      {
+        name: "resume",
+        purpose: "Print continuation context from the latest relevant project memory and snapshot.",
+        synopsis: "rekord resume [--agent <name>] [--from-agent <name>] [--to-agent <name>] [--session <id>]",
+        flags: [
+          ["--agent", "Resume context for one agent."],
+          ["--from-agent", "Read context created by another agent."],
+          ["--to-agent", "Format handoff context for the next agent."],
+          ["--session", "Resume from a named Rekord session."],
+        ],
+      },
+      {
+        name: "snapshot",
+        purpose: "Capture a git-aware stopping point with changed files and full patches.",
+        synopsis: "rekord snapshot [note] [--agent <name>] [--session <id>]",
+        flags: [
+          ["--agent", "Agent name to associate with the snapshot."],
+          ["--session", "Named Rekord session to link this snapshot to."],
+        ],
+      },
+      {
+        name: "memory add",
+        purpose: "Add a project memory using the full memory command namespace.",
+        synopsis: "rekord memory add <text>",
+        flags: [],
+      },
+      {
+        name: "memory list",
+        purpose: "List project memories.",
+        synopsis: "rekord memory list",
+        flags: [],
+      },
+      {
+        name: "memory search",
+        purpose: "Search project memories.",
+        synopsis: "rekord memory search <query>",
+        flags: [],
+      },
+      {
+        name: "memory show",
+        purpose: "Show one project memory by id.",
+        synopsis: "rekord memory show <id>",
+        flags: [],
+      },
+      {
+        name: "memory resolve",
+        purpose: "Mark a memory or blocker resolved.",
+        synopsis: "rekord memory resolve <id>",
+        flags: [],
+      },
+    ],
+  },
+  {
     label: "// security",
     commands: [
       {

@@ -10,6 +10,7 @@ export const PAGES: Record<string, string> = {
   sessions: "Sessions",
   exporting: "Exporting",
   handoff: "AI Handoff",
+  memory: "Memory",
   redaction: "Redaction & Security",
   tmux: "tmux",
   skills: "Skills",
@@ -28,6 +29,7 @@ export const EYEBROWS: Record<string, string> = {
   sessions: "sessions",
   exporting: "exporting",
   handoff: "ai handoff",
+  memory: "memory",
   redaction: "redaction & security",
   tmux: "tmux",
   skills: "skills",
@@ -305,7 +307,152 @@ brew install rekord"></button>
 
 <div class="callout note">
   <div class="ch">▋ see also</div>
-  <p><a class="inl" href="/docs/mcp">Live agent control (MCP)</a> is the live counterpart to handoff — handoff bundles a session after the fact; MCP drives and records it as it happens.</p>
+  <p><a class="inl" href="/docs/mcp">Live agent control (MCP)</a> is the live counterpart to handoff — handoff bundles a session after the fact; MCP drives and records it as it happens. <a class="inl" href="/docs/memory">Memory</a> carries durable context across sessions and agents.</p>
+</div>`,
+
+  memory: `
+<p class="lead">Rekord Memory is a user-local shared memory layer for humans and coding agents. It lets agents remember what happened, what changed, what failed, and where work should continue, even after a terminal closes or a different agent takes over.</p>
+
+<div class="callout note">
+  <div class="ch">▋ since 0.3.0</div>
+  <p>Rekord remains a terminal workflow recorder; Memory adds persistent project continuity on top.</p>
+</div>
+
+<h2>The problem</h2>
+<p>Coding agents lose context across sessions. Claude, Codex, Cursor, OpenCode, Goose, Aider, and other agents each keep their own short-lived view of work. When users switch tools, close terminals, or hand off from one agent to another, useful context disappears.</p>
+<p>Git remembers code history. Rekord remembers work history.</p>
+
+<h2>What Memory adds</h2>
+<ul>
+  <li>Durable project memories</li>
+  <li>Git-aware snapshots with full patches</li>
+  <li>Agent-to-agent handoff</li>
+  <li>Resume context for interrupted work</li>
+  <li>Named session linkage</li>
+  <li>MCP tools so agents can read and write memory directly</li>
+</ul>
+<p>Memory is stored locally by default under:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="~/.rekord/projects/&lt;project-hash&gt;/"></button>
+  <pre><span class="o">~/.rekord/projects/&lt;project-hash&gt;/</span></pre>
+</div>
+<p>Rekord does not write memory files into your repository by default.</p>
+
+<h2>Core workflow</h2>
+<p>Store something important:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy='rekord remember "Parser refactor stopped at the failing unicode fixture"'></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord remember <span class="st">"Parser refactor stopped at the failing unicode fixture"</span></span></pre>
+</div>
+<p>Capture a stopping point:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy='rekord snapshot "Implemented parser refactor; tests still failing"'></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord snapshot <span class="st">"Implemented parser refactor; tests still failing"</span></span></pre>
+</div>
+<p>Search project memory and resume later:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord recall parser
+rekord resume"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord recall parser</span>
+<span class="pr">$ </span><span class="ct">rekord resume</span></pre>
+</div>
+
+<h2>Agent-to-agent handoff</h2>
+<p>Memory can scope context by agent. If Claude started the work:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy='rekord snapshot --agent=claude "Stopped at failing refresh-token test"'></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord snapshot <span class="fl">--agent</span>=claude <span class="st">"Stopped at failing refresh-token test"</span></span></pre>
+</div>
+<p>Codex, OpenCode, or another agent can continue from Claude's context:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord resume --from-agent=claude --to-agent=codex"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord resume <span class="fl">--from-agent</span>=claude <span class="fl">--to-agent</span>=codex</span></pre>
+</div>
+<p>The output includes the latest snapshot, relevant memories, changed files, patch files, blockers, and continuation context.</p>
+
+<h2>Named sessions</h2>
+<p>Agents can name Rekord sessions and tell users how to resume them.</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="memory-mvp-claude"></button>
+  <pre><span class="o">memory-mvp-claude</span></pre>
+</div>
+<p>Store memory and create snapshots linked to that session:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy='rekord remember --agent=claude --session=memory-mvp-claude "Auth middleware refactor is incomplete"
+rekord snapshot --agent=claude --session=memory-mvp-claude "Stopped after debugging token expiry"'></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord remember <span class="fl">--agent</span>=claude <span class="fl">--session</span>=memory-mvp-claude <span class="st">"Auth middleware refactor is incomplete"</span></span>
+<span class="pr">$ </span><span class="ct">rekord snapshot <span class="fl">--agent</span>=claude <span class="fl">--session</span>=memory-mvp-claude <span class="st">"Stopped after debugging token expiry"</span></span></pre>
+</div>
+<p>Resume from that exact session:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord resume --session=memory-mvp-claude"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord resume <span class="fl">--session</span>=memory-mvp-claude</span></pre>
+</div>
+
+<h2>Git-aware snapshots</h2>
+<p><code class="ic">rekord snapshot</code> captures the current branch, current HEAD, dirty status, changed files, full unstaged patch, and full staged patch.</p>
+<p>Patch files are written locally under:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="~/.rekord/projects/&lt;project-hash&gt;/patches/"></button>
+  <pre><span class="o">~/.rekord/projects/&lt;project-hash&gt;/patches/</span></pre>
+</div>
+<p>This makes snapshots useful for review, recovery, and handoff.</p>
+
+<h2>Commands</h2>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord remember &lt;text&gt;
+rekord recall [query]
+rekord resume
+rekord snapshot [note]"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord remember &lt;text&gt;</span>
+<span class="pr">$ </span><span class="ct">rekord recall [query]</span>
+<span class="pr">$ </span><span class="ct">rekord resume</span>
+<span class="pr">$ </span><span class="ct">rekord snapshot [note]</span></pre>
+</div>
+<p>Full memory management:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="rekord memory add &lt;text&gt;
+rekord memory list
+rekord memory search &lt;query&gt;
+rekord memory show &lt;id&gt;
+rekord memory resolve &lt;id&gt;"></button>
+  <pre><span class="pr">$ </span><span class="ct">rekord memory add &lt;text&gt;</span>
+<span class="pr">$ </span><span class="ct">rekord memory list</span>
+<span class="pr">$ </span><span class="ct">rekord memory search &lt;query&gt;</span>
+<span class="pr">$ </span><span class="ct">rekord memory show &lt;id&gt;</span>
+<span class="pr">$ </span><span class="ct">rekord memory resolve &lt;id&gt;</span></pre>
+</div>
+
+<h2>MCP tools</h2>
+<table class="flags">
+  <thead><tr><th>tool</th><th>purpose</th></tr></thead>
+  <tbody>
+    <tr><td class="f">memory_write</td><td class="d">Persist a project memory.</td></tr>
+    <tr><td class="f">memory_search</td><td class="d">Search project memory.</td></tr>
+    <tr><td class="f">memory_list</td><td class="d">List memories.</td></tr>
+    <tr><td class="f">memory_get</td><td class="d">Read one memory by id.</td></tr>
+    <tr><td class="f">memory_resolve</td><td class="d">Mark a memory or blocker resolved.</td></tr>
+    <tr><td class="f">snapshot_create</td><td class="d">Capture git-aware project state.</td></tr>
+    <tr><td class="f">resume_context</td><td class="d">Return latest snapshot, relevant memories, changed files, patches, blockers, and continuation context.</td></tr>
+  </tbody>
+</table>
+
+<h2>Positioning</h2>
+<p>Memory makes Rekord the continuity layer for agentic development:</p>
+<div class="codeblock">
+  <button class="copy-btn" data-copy="Record what happened.
+Snapshot where work stopped.
+Remember what matters.
+Resume with the next agent."></button>
+  <pre><span class="o">Record what happened.</span>
+<span class="o">Snapshot where work stopped.</span>
+<span class="o">Remember what matters.</span>
+<span class="o">Resume with the next agent.</span></pre>
+</div>
+
+<div class="callout note">
+  <div class="ch">▋ see also</div>
+  <p><a class="inl" href="/docs/handoff">AI Handoff</a> bundles a single session after the fact; Memory is the durable layer across sessions and agents. <a class="inl" href="/docs/mcp">Live agent control (MCP)</a> exposes the memory tools to agents directly.</p>
 </div>`,
 
   redaction: `
@@ -481,6 +628,21 @@ brew install rekord"></button>
   </tbody>
 </table>
 <p>Every wait returns a <code class="ic">reason</code>: <code class="ic">matched</code>, <code class="ic">idle</code>, <code class="ic">exited</code>, or <code class="ic">deadline</code>.</p>
+
+<h3>Memory tools</h3>
+<p><a class="inl" href="/docs/memory">Rekord Memory</a> adds tools so agents can read and write persistent project memory and resume interrupted work.</p>
+<table class="flags">
+  <thead><tr><th>tool</th><th>purpose</th></tr></thead>
+  <tbody>
+    <tr><td class="f">memory_write</td><td class="d">Persist a project memory.</td></tr>
+    <tr><td class="f">memory_search</td><td class="d">Search project memory.</td></tr>
+    <tr><td class="f">memory_list</td><td class="d">List memories.</td></tr>
+    <tr><td class="f">memory_get</td><td class="d">Read one memory by id.</td></tr>
+    <tr><td class="f">memory_resolve</td><td class="d">Mark a memory or blocker resolved.</td></tr>
+    <tr><td class="f">snapshot_create</td><td class="d">Capture git-aware project state.</td></tr>
+    <tr><td class="f">resume_context</td><td class="d">Return latest snapshot, relevant memories, changed files, patches, blockers, and continuation context.</td></tr>
+  </tbody>
+</table>
 
 <h2>Example flow</h2>
 <ol>
